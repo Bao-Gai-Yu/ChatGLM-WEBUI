@@ -273,6 +273,8 @@ function showKnowledgeBase(){
     letThisSparkle(knoledgeBase, 5000);
 }
 
+function
+
 function letThisSparkle(element, sparkleTime = 3000) {
     element.classList.add('chuanhu-sparkle');
     setTimeout(() => {element.classList.remove('chuanhu-sparkle');}, sparkleTime);

@@ -30,6 +30,10 @@ from src.config import retrieve_proxy, hide_history_when_not_logged_in, config_f
 from src.presets import ALREADY_CONVERTED_MARK, HISTORY_DIR, TEMPLATES_DIR, i18n, LOCAL_MODELS, ONLINE_MODELS
 from src.shared import state
 
+import requests
+import base64
+import gradio as gr
+
 if TYPE_CHECKING:
     from typing import TypedDict
 
@@ -153,6 +157,49 @@ def set_single_turn(current_model, *args):
 
 def handle_file_upload(current_model, *args):
     return current_model.handle_file_upload(*args)
+
+
+def get_access_token():
+    api_key = "gR4jEsT4idy2LyWrMyNaNdSk"
+    secret_key = "VtIsp7oKdE64nrA5qWXt24etJxOHi7W3"
+    token_url = "https://aip.baidubce.com/oauth/2.0/token"
+    url = f"{token_url}?grant_type=client_credentials&client_id={api_key}&client_secret={secret_key}"
+    payload = ""
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+    # print("ddd")
+    # print(response.text)
+    # print("ddd")
+    return response.json()["access_token"]
+
+
+def recognize_image(file, chatbot):
+    request_url = "https://aip.baidubce.com/rest/2.0/image-classify/v1/landmark"
+    # 二进制方式打开图片文件
+    f = open(file, 'rb')
+    img = base64.b64encode(f.read())
+
+    params = {"image": img}
+    access_token = get_access_token()
+    print("access_token: " + access_token)
+    request_url = request_url + "?access_token=" + access_token
+    headers = {'content-type': 'application/x-www-form-urlencoded'}
+    response = requests.post(request_url, data=params, headers=headers)
+    if response:
+        print(response.json()["result"]["landmark"])
+        return response.json()["result"]["landmark"]
+
+
+def handle_img_upload(file, chatbot):
+    global landmark_answer
+    landmark_answer = recognize_image(file.name, chatbot)
+    logger.info("图片路径为：" + file.name)
+    chatbot.append(("我已经上传了一张图片。", "我已经接收到你的图片。"))
+    query = "请告诉我一些关于" + landmark_answer + "的信息。"
+    return query, chatbot, file.name
 
 
 def handle_summarize_index(current_model, *args):

@@ -7,6 +7,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from loguru import logger
 from tqdm import tqdm
 
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+
 from src.config import local_embedding, retrieve_proxy, chunk_overlap, chunk_size, hf_emb_model_name
 from src import shared
 from src.utils import excel_to_string, get_files_hash, load_pkl, save_pkl
@@ -97,6 +99,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         return [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip() != ""]
 
 
+# 返回得到的documents
 def get_documents(file_paths):
     text_splitter = ChineseRecursiveTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
 
@@ -165,6 +168,32 @@ def get_documents(file_paths):
     return documents
 
 
+# 加载embedding
+embedding_model_dict = {
+    "ernie-tiny": "nghuyong/ernie-3.0-nano-zh",
+    "ernie-base": "nghuyong/ernie-3.0-base-zh",
+    "text2vec": "GanymedeNil/text2vec-large-chinese",
+    "text2vec2": "uer/sbert-base-chinese-nli",
+    "text2vec3": "shibing624/text2vec-base-chinese",
+}
+
+
+def load_embedding_model(model_name="ernie-tiny"):
+    """
+    加载embedding模型
+    :param model_name:
+    :return:
+    """
+    encode_kwargs = {"normalize_embeddings": False}
+    model_kwargs = {"device": "cuda:0"}
+    return HuggingFaceEmbeddings(
+        model_name=embedding_model_dict[model_name],
+        model_kwargs=model_kwargs,
+        encode_kwargs=encode_kwargs
+    )
+
+
+# 返回获取的index索引数据
 def construct_index(
         api_key,
         files,
@@ -180,23 +209,26 @@ def construct_index(
     index_dir = os.path.join(pwd_path, '../index')
     index_path = f"{index_dir}/{index_name}"
     doc_file = f"{index_path}/docs.pkl"
-    if local_embedding:
-        embeddings = HuggingFaceEmbeddings(model_name=hf_emb_model_name)
-    else:
-        from langchain.embeddings import OpenAIEmbeddings
-        if os.environ.get("OPENAI_API_TYPE", "openai") == "openai":
-            embeddings = OpenAIEmbeddings(
-                openai_api_base=shared.state.openai_api_base,
-                openai_api_key=os.environ.get("OPENAI_EMBEDDING_API_KEY", api_key)
-            )
-        else:
-            embeddings = OpenAIEmbeddings(
-                deployment=os.environ["AZURE_EMBEDDING_DEPLOYMENT_NAME"],
-                openai_api_key=os.environ["AZURE_OPENAI_API_KEY"],
-                model=os.environ["AZURE_EMBEDDING_MODEL_NAME"],
-                openai_api_base=os.environ["AZURE_OPENAI_API_BASE_URL"],
-                openai_api_type="azure"
-            )
+
+    #
+    embeddings = load_embedding_model('text2vec3')
+    # if local_embedding:
+    #     embeddings = HuggingFaceEmbeddings(model_name=hf_emb_model_name)
+    # else:
+    #     from langchain.embeddings import OpenAIEmbeddings
+    #     if os.environ.get("OPENAI_API_TYPE", "openai") == "openai":
+    #         embeddings = OpenAIEmbeddings(
+    #             openai_api_base=shared.state.openai_api_base,
+    #             openai_api_key=os.environ.get("OPENAI_EMBEDDING_API_KEY", api_key)
+    #         )
+    #     else:
+    #         embeddings = OpenAIEmbeddings(
+    #             deployment=os.environ["AZURE_EMBEDDING_DEPLOYMENT_NAME"],
+    #             openai_api_key=os.environ["AZURE_OPENAI_API_KEY"],
+    #             model=os.environ["AZURE_EMBEDDING_MODEL_NAME"],
+    #             openai_api_base=os.environ["AZURE_OPENAI_API_BASE_URL"],
+    #             openai_api_type="azure"
+    #         )
     if os.path.exists(index_path) and load_from_cache_if_possible:
         logger.info("找到了缓存的索引文件，加载中……")
         index = FAISS.load_local(index_path, embeddings)

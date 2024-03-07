@@ -5,6 +5,10 @@
 """
 import gradio as gr
 from loguru import logger
+import numpy as np
+
+print(gr.__version__)
+# 3.43.2
 
 from src.config import (
     http_proxy,
@@ -102,6 +106,7 @@ from src.utils import (
     transfer_input,
     handle_file_upload,
     handle_summarize_index,
+    handle_img_upload,
 )
 
 reg_patch()
@@ -221,6 +226,7 @@ with gr.Blocks(theme=small_and_beautiful_theme) as demo:
                                 websearch_label=i18n("在线搜索"),
                                 upload_file_label=i18n("上传文件"),
                                 upload_image_label=i18n("上传图片"),
+                                recording_label=i18n("开始录音"),
                                 uploaded_files_label=i18n("知识库文件"),
                                 uploaded_files_tip=i18n("在工具箱中管理知识库文件"),
                                 uploaded_image_label=i18n("图片内容"),
@@ -327,6 +333,32 @@ with gr.Blocks(theme=small_and_beautiful_theme) as demo:
                                                 multiselect=False,
                                                 container=False,
                                             )
+                        gr.Markdown("---", elem_classes="hr-line")
+                        with gr.Accordion(label="上传图片",open=True, visible=True):
+                            upload_img = gr.UploadButton(
+                                label="📷",
+                                type="file",
+                                file_count="single",
+                                file_types=['.jpg', '.jpeg', '.png'],
+                                elem_id="upload-img-file",
+                                # visible=False
+                            )
+                            uploaded_img = gr.Image(
+                                elem_id="now-uploaded-img",
+                            )
+                        gr.Markdown("---", elem_classes="hr-line")
+                        with gr.Accordion(label="语音输入",open=True, visible=True):
+                            # voice_input = gr.Audio(
+                            #     sources=["microphone"],
+                            #     type="numpy",
+                            #     format="wav",
+                            #     elem_id="voice-input",
+                            #     # visible=False
+                            # )
+                            voice_input = gr.Microphone(
+                                elem_id="voice-input",
+                                visible=True
+                            )
                         gr.Markdown("---", elem_classes="hr-line")
                         with gr.Accordion(label=i18n("知识库"), open=True, elem_id="gr-kb-accordion", visible=True):
                             use_websearch_checkbox = gr.Checkbox(label=i18n(
@@ -623,8 +655,17 @@ with gr.Blocks(theme=small_and_beautiful_theme) as demo:
         **end_outputing_args).then(
         **auto_name_chat_history_args)
     submitBtn.click(**get_usage_args)
+
     index_files.upload(handle_file_upload, [current_model, index_files, chatbot, language_select_dropdown], [
         index_files, chatbot, status_display])
+
+    upload_img.upload(handle_img_upload, inputs=[upload_img, chatbot], outputs=[user_input, chatbot,uploaded_img]).then(
+        **transfer_input_args).then(
+        **chatgpt_predict_args, api_name="predict").then(
+        **end_outputing_args).then(
+        **auto_name_chat_history_args)
+    upload_img.upload(**get_usage_args)
+
     summarize_btn.click(handle_summarize_index, [
         current_model, index_files, chatbot, language_select_dropdown], [chatbot, status_display])
     emptyBtn.click(

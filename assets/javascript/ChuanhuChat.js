@@ -1,4 +1,3 @@
-
 // ChuanhuChat core javascript
 
 const MAX_HISTORY_LENGTH = 32;
@@ -15,6 +14,7 @@ var chatbotArea = null;
 var chatbot = null;
 var chatbotIndicator = null;
 var uploaderIndicator = null;
+var imgUploaderIndicator = null;
 var chatListIndicator = null;
 var chatbotWrap = null;
 var apSwitch = null;
@@ -48,6 +48,7 @@ function addInit() {
 
     chatbotIndicator = gradioApp().querySelector('#chuanhu-chatbot > div.wrap');
     uploaderIndicator = gradioApp().querySelector('#upload-index-file > div[data-testid="block-label"]');
+    imgUploaderIndicator = gradioApp().querySelector('#upload-img-file > div[data-testid="block-label"]');
     chatListIndicator = gradioApp().querySelector('#history-select-dropdown > div.wrap');
 
     for (let elem in needInit) {
@@ -57,16 +58,17 @@ function addInit() {
         }
     }
 
-    chatbotObserver.observe(chatbotIndicator, { attributes: true, childList: true, subtree: true });
-    chatListObserver.observe(chatListIndicator, { attributes: true });
+    chatbotObserver.observe(chatbotIndicator, {attributes: true, childList: true, subtree: true});
+    chatListObserver.observe(chatListIndicator, {attributes: true});
     setUploader();
     setPasteUploader();
     setDragUploader();
+    setImgUploader();
     return true;
 }
 
 function initialize() {
-    gradioObserver.observe(gradioApp(), { childList: true, subtree: true });
+    gradioObserver.observe(gradioApp(), {childList: true, subtree: true});
 
     loginUserForm = gradioApp().querySelector(".gradio-container > .main > .wrap > .panel > .form")
     gradioContainer = gradioApp().querySelector(".gradio-container");
@@ -127,7 +129,6 @@ function initialize() {
     // trainBody.classList.add('hide-body');
 
 
-
     return true;
 }
 
@@ -136,7 +137,7 @@ function gradioApp() {
     const elem = elems.length == 0 ? document : elems[0];
 
     if (elem !== document) {
-        elem.getElementById = function(id) {
+        elem.getElementById = function (id) {
             return document.getElementById(id);
         };
     }
@@ -184,7 +185,7 @@ function selectHistory() {
                 }
                 user_input_ta.selectionStart = user_input_ta.value.length;
                 user_input_ta.selectionEnd = user_input_ta.value.length;
-                const input_event = new InputEvent("input", { bubbles: true, cancelable: true });
+                const input_event = new InputEvent("input", {bubbles: true, cancelable: true});
                 user_input_ta.dispatchEvent(input_event);
             } else if (event.code === "Enter") {
                 if (value) {
@@ -198,6 +199,9 @@ function selectHistory() {
                 }
             }
         });
+        // user_input_ta,addEventListener("change",function (event){
+        //
+        // })
     }
 }
 
@@ -213,6 +217,7 @@ function checkModel() {
     var modelValue = model.value;
     checkGPT();
     checkXMChat();
+
     function checkGPT() {
         modelValue = model.value;
         if (modelValue.toLowerCase().includes('gpt')) {
@@ -222,6 +227,7 @@ function checkModel() {
         }
         // console.log('gpt model checked')
     }
+
     function checkXMChat() {
         modelValue = model.value;
         if (modelValue.includes('xmchat')) {
@@ -231,8 +237,8 @@ function checkModel() {
         }
     }
 
-    model.addEventListener('blur', ()=>{
-        setTimeout(()=>{
+    model.addEventListener('blur', () => {
+        setTimeout(() => {
             checkGPT();
             checkXMChat();
         }, 100);
@@ -250,6 +256,7 @@ function toggleDarkMode(isEnabled) {
         document.body.style.backgroundColor = "";
     }
 }
+
 function adjustDarkMode() {
     const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
     apSwitch.checked = darkModeQuery.matches;
@@ -262,6 +269,7 @@ function adjustDarkMode() {
         toggleDarkMode(e.target.checked);
     });
 }
+
 function btnToggleDarkMode() {
     apSwitch.checked = !apSwitch.checked;
     toggleDarkMode(apSwitch.checked);
@@ -274,6 +282,7 @@ function setScrollShadow() {
     toolboxTabs.forEach((tab) => {
         toolboxScrollWidth += tab.offsetWidth; // 获取按钮宽度并累加
     });
+
     function adjustScrollShadow() {
         if (toolboxScroll.scrollLeft > 0) {
             toolboxScroll.classList.add('scroll-shadow-left');
@@ -287,6 +296,7 @@ function setScrollShadow() {
             toolboxScroll.classList.remove('scroll-shadow-right');
         }
     }
+
     toolboxScroll.addEventListener('scroll', () => {
         adjustScrollShadow();
     });
@@ -332,9 +342,10 @@ function setChatbotHeight() {
         }
     }
 }
+
 function setChatbotScroll() {
     var scrollHeight = chatbotWrap.scrollHeight;
-    chatbotWrap.scrollTo(0,scrollHeight)
+    chatbotWrap.scrollTo(0, scrollHeight)
 }
 
 function setAutocomplete() {
@@ -420,7 +431,7 @@ window.addEventListener("DOMContentLoaded", function () {
     isInIframe = (window.self !== window.top);
     historyLoaded = false;
 });
-window.addEventListener('resize', ()=>{
+window.addEventListener('resize', () => {
     // setChatbotHeight();
     updateVH();
     windowWidth = window.innerWidth;
@@ -433,7 +444,9 @@ window.addEventListener('orientationchange', (event) => {
     setPopupBoxPosition();
     adjustSide();
 });
-window.addEventListener('scroll', ()=>{setPopupBoxPosition();});
+window.addEventListener('scroll', () => {
+    setPopupBoxPosition();
+});
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", adjustDarkMode);
 
 // console suprise
@@ -446,11 +459,13 @@ var styleDesc1 = `
 font-size: 12px;
 font-family: ui-monospace, monospace;
 `
+
 function makeML(str) {
     let l = new String(str)
     l = l.substring(l.indexOf("/*") + 3, l.lastIndexOf("*/"))
     return l
 }
+
 let ChuanhuInfo = function () {
     /* chatgpt-webui - GUI for ChatGPT API */
 }
@@ -459,5 +474,5 @@ let description = `
 GitHub repository: [https://github.com/shibing624/chatgpt-webui]\n
 Enjoy our project!\n
 `
-console.log(`%c${makeML(ChuanhuInfo)}`,styleTitle1);
+console.log(`%c${makeML(ChuanhuInfo)}`, styleTitle1);
 console.log(`%c${description}`, styleDesc1);
