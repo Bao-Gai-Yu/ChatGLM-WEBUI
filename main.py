@@ -107,6 +107,7 @@ from src.utils import (
     handle_file_upload,
     handle_summarize_index,
     handle_img_upload,
+    handle_voice_recording,
 )
 
 reg_patch()
@@ -226,7 +227,7 @@ with gr.Blocks(theme=small_and_beautiful_theme) as demo:
                                 websearch_label=i18n("在线搜索"),
                                 upload_file_label=i18n("上传文件"),
                                 upload_image_label=i18n("上传图片"),
-                                recording_label=i18n("开始录音"),
+                                recording_label=i18n("语音输入"),
                                 uploaded_files_label=i18n("知识库文件"),
                                 uploaded_files_tip=i18n("在工具箱中管理知识库文件"),
                                 uploaded_image_label=i18n("图片内容"),
@@ -334,7 +335,7 @@ with gr.Blocks(theme=small_and_beautiful_theme) as demo:
                                                 container=False,
                                             )
                         gr.Markdown("---", elem_classes="hr-line")
-                        with gr.Accordion(label="上传图片",open=True, visible=True):
+                        with gr.Accordion(label="上传图片", open=True, visible=True):
                             upload_img = gr.UploadButton(
                                 label="📷",
                                 type="file",
@@ -347,7 +348,7 @@ with gr.Blocks(theme=small_and_beautiful_theme) as demo:
                                 elem_id="now-uploaded-img",
                             )
                         gr.Markdown("---", elem_classes="hr-line")
-                        with gr.Accordion(label="语音输入",open=True, visible=True):
+                        with gr.Accordion(label="语音输入", open=True, visible=True):
                             # voice_input = gr.Audio(
                             #     sources=["microphone"],
                             #     type="numpy",
@@ -357,6 +358,9 @@ with gr.Blocks(theme=small_and_beautiful_theme) as demo:
                             # )
                             voice_input = gr.Microphone(
                                 elem_id="voice-input",
+                                format='wav',
+                                # type="numpy",
+                                type="filepath",
                                 visible=True
                             )
                         gr.Markdown("---", elem_classes="hr-line")
@@ -659,12 +663,14 @@ with gr.Blocks(theme=small_and_beautiful_theme) as demo:
     index_files.upload(handle_file_upload, [current_model, index_files, chatbot, language_select_dropdown], [
         index_files, chatbot, status_display])
 
-    upload_img.upload(handle_img_upload, inputs=[upload_img, chatbot], outputs=[user_input, chatbot,uploaded_img]).then(
+    upload_img.upload(handle_img_upload, inputs=[upload_img, chatbot], outputs=[user_input, chatbot, uploaded_img]).then(
         **transfer_input_args).then(
         **chatgpt_predict_args, api_name="predict").then(
         **end_outputing_args).then(
         **auto_name_chat_history_args)
     upload_img.upload(**get_usage_args)
+
+    voice_input.stop_recording(handle_voice_recording, inputs=[voice_input], outputs=[user_input])
 
     summarize_btn.click(handle_summarize_index, [
         current_model, index_files, chatbot, language_select_dropdown], [chatbot, status_display])

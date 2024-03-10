@@ -24,8 +24,11 @@ class ChatGLMClient(BaseLLMModel):
         # else:
         #     model_path = model_name
 
-        # 直接加载本地模型
+        # 直接加载本地模型-系统盘
         model_path = "/root/ChatGLM-6B/chatglm3-6b/chatglm3-6b"
+        # 数据盘
+        # model_path = "/root/autodl-tmp/chatglm3-6b/chatglm3-6b"
+
 
         self.CHATGLM_TOKENIZER = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
         quantified = False

@@ -1,4 +1,3 @@
-
 function openSettingBox() {
     chuanhuPopup.classList.add('showBox');
     popupWrapper.classList.add('showBox');
@@ -47,7 +46,7 @@ function showMask(obj) {
         document.body.appendChild(mask);
         // mask.classList.add('transparent-mask');
     }
-    
+
 
     mask.addEventListener('click', () => {
         if (obj == "box") {
@@ -163,7 +162,7 @@ function adjustSide() {
             closeSide(menu);
             closeSide(toolbox);
         }
-    } else if (windowWidth > 768 && windowWidth < 1024 ) {
+    } else if (windowWidth > 768 && windowWidth < 1024) {
         shouldAutoClose = true;
         if (wantOpenToolbox) {
             if (wantOpenMenu) {
@@ -181,7 +180,7 @@ function adjustSide() {
                 closeSide(toolbox);
                 openSide(menu);
             }
-        } else if (!wantOpenMenu && !wantOpenToolbox){
+        } else if (!wantOpenMenu && !wantOpenToolbox) {
             closeSide(menu);
             closeSide(toolbox);
         }
@@ -210,18 +209,24 @@ function adjustMask() {
 
     if (windowWidth > 768) {
         sideMask.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-        setTimeout(() => {sideMask.style.display = 'none'; }, 100);
+        setTimeout(() => {
+            sideMask.style.display = 'none';
+        }, 100);
         return;
     }
     // if (windowWidth <= 768)
     if (menuOpening || toolboxOpening) {
         document.body.classList.add('popup-open');
         sideMask.style.display = 'block';
-        setTimeout(() => {sideMask.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';}, 200);
+        setTimeout(() => {
+            sideMask.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        }, 200);
         sideMask.classList.add('mask-blur');
     } else if (!menuOpening && !toolboxOpening) {
         sideMask.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-        setTimeout(() => {sideMask.style.display = 'none'; }, 100);
+        setTimeout(() => {
+            sideMask.style.display = 'none';
+        }, 100);
     }
 }
 
@@ -258,7 +263,7 @@ function checkChatMoreMask() {
     }
 }
 
-function showKnowledgeBase(){
+function showKnowledgeBase() {
     if (!toolboxOpening) {
         toolboxClick();
     }
@@ -269,15 +274,69 @@ function showKnowledgeBase(){
         knoledgeBaseAccordion.querySelector('.label-wrap')?.click();
     }
     // 将 knoledgeBase 滚动到可见区域
-    setTimeout(() => {knoledgeBaseAccordion.scrollIntoView({ behavior: "smooth"}); }, 100);
+    setTimeout(() => {
+        knoledgeBaseAccordion.scrollIntoView({behavior: "smooth"});
+    }, 100);
     letThisSparkle(knoledgeBase, 5000);
 }
 
-function
+function startRecording() {
+    let audio = gradioApp().querySelector("#voice-input .mic-wrap button ");
+    startbtn = document.getElementById("start-recording-btn");
+    stopbtn = document.getElementById("stop-recording-btn");
+    viewRecord = document.getElementById("view-record");
+    console.log(audio);
+    startbtn.style.display = "none";
+    stopbtn.style.display = "flex";
+    viewRecord.style.display = "none";
+    // startbtn.classList.add("hidden");
+    // stopbtn.classList.toggle("hidden");
+    // viewRecord.classList.add("hidden");
+    audio.click();
+}
+
+function stopRecording() {
+    let audio = gradioApp().querySelector("#voice-input .mic-wrap button ");
+    startbtn = document.getElementById("start-recording-btn");
+    stopbtn = document.getElementById("stop-recording-btn");
+    viewRecord = document.getElementById("view-record");
+    console.log(audio);
+    startbtn.style.display = "none";
+    stopbtn.style.display = "none";
+    viewRecord.style.display = "flex";
+    // viewRecord.style.justifyContent = "space-between";
+    // viewRecord.style.gap = "4px";
+    // startbtn.classList.add("hidden");
+    // stopbtn.classList.add("hidden");
+    // viewRecord.classList.toggle("hidden");
+    audio.click();
+}
+
+function playRecord() {
+    let record = gradioApp().querySelector("#voice-input audio");
+    record.play();
+}
+
+function clearRecord() {
+    let clearbtn = gradioApp().querySelector("#voice-input > div:nth-child(3) > button:nth-child(2)");
+    startbtn = document.getElementById("start-recording-btn");
+    stopbtn = document.getElementById("stop-recording-btn");
+    viewRecord = document.getElementById("view-record");
+    startbtn.style.display = "flex";
+    stopbtn.style.display = "none";
+    viewRecord.style.display = "none";
+    // startbtn.classList.toggle("hidden");
+    // stopbtn.classList.add("hidden");
+    // viewRecord.classList.add("hidden");
+    clearbtn.click();
+}
+
 
 function letThisSparkle(element, sparkleTime = 3000) {
     element.classList.add('chuanhu-sparkle');
-    setTimeout(() => {element.classList.remove('chuanhu-sparkle');}, sparkleTime);
+    setTimeout(() => {
+        element.classList.remove('chuanhu-sparkle');
+    }, sparkleTime);
 }
 
 function switchToolBoxTab(tabIndex) {
@@ -326,7 +385,7 @@ function setHistroyPanel() {
 
 
 // function testTrain() {
-    
+
 //     trainBody.classList.toggle('hide-body');
 //     trainingBox.classList.remove('hideBox');
 

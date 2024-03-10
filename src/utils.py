@@ -33,6 +33,21 @@ from src.shared import state
 import requests
 import base64
 import gradio as gr
+import websocket
+import hashlib
+import base64
+import hmac
+import json
+import sys
+from urllib.parse import urlencode
+import time
+import ssl
+from wsgiref.handlers import format_date_time
+from datetime import datetime
+from time import mktime
+import _thread as thread
+import librosa
+import soundfile as sf
 
 if TYPE_CHECKING:
     from typing import TypedDict
@@ -200,6 +215,118 @@ def handle_img_upload(file, chatbot):
     chatbot.append(("我已经上传了一张图片。", "我已经接收到你的图片。"))
     query = "请告诉我一些关于" + landmark_answer + "的信息。"
     return query, chatbot, file.name
+
+
+IS_PY3 = sys.version_info.major == 3
+
+if IS_PY3:
+    from urllib.request import urlopen
+    from urllib.request import Request
+    from urllib.error import URLError
+    from urllib.parse import urlencode
+
+    timer = time.perf_counter
+else:
+    import urllib2
+    from urllib2 import urlopen
+    from urllib2 import Request
+    from urllib2 import URLError
+    from urllib import urlencode
+
+    if sys.platform == "win32":
+        timer = time.clock
+    else:
+        # On most other platforms the best timer is time.time()
+        timer = time.time
+
+BAIDU_API_KEY = 'FJPl7dDc5lN5j5gl8Sg5eGg4'
+BAIDU_SECRET_KEY = 'N20406u8Q9CHrtv5wyeTQxUKZml2Cxoc'
+
+# 需要识别的文件
+AUDIO_FILE = './audio/16k.wav'  # 只支持 pcm/wav/amr 格式，极速版额外支持m4a 格式
+# 文件格式
+FORMAT = AUDIO_FILE[-3:];  # 文件后缀只支持 pcm/wav/amr 格式，极速版额外支持m4a 格式
+
+CUID = '123456PYTHON';
+# 采样率
+RATE = 16000;  # 固定值
+
+# 普通版
+
+DEV_PID = 1537;  # 1537 表示识别普通话，使用输入法模型。根据文档填写PID，选择语言及识别模型
+ASR_URL = 'http://vop.baidu.com/server_api'
+SCOPE = 'audio_voice_assistant_get'  # 有此scope表示有asr能力，没有请在网页里勾选，非常旧的应用可能没有
+
+
+class DemoError(Exception):
+    pass
+
+
+"""  TOKEN start """
+
+TOKEN_URL = 'http://aip.baidubce.com/oauth/2.0/token'
+
+
+def fetch_token():
+    params = {'grant_type': 'client_credentials',
+              'client_id': BAIDU_API_KEY,
+              'client_secret': BAIDU_SECRET_KEY}
+    post_data = urlencode(params)
+    if (IS_PY3):
+        post_data = post_data.encode('utf-8')
+    req = Request(TOKEN_URL, post_data)
+    try:
+        f = urlopen(req)
+        result_str = f.read()
+    except URLError as err:
+        print('token http response http code : ' + str(err.code))
+        result_str = err.read()
+    if (IS_PY3):
+        result_str = result_str.decode()
+
+    print(result_str)
+    result = json.loads(result_str)
+    print(result)
+    if ('access_token' in result.keys() and 'scope' in result.keys()):
+        if SCOPE and (not SCOPE in result['scope'].split(' ')):  # SCOPE = False 忽略检查
+            raise DemoError('scope is not correct')
+        print('SUCCESS WITH TOKEN: %s ; EXPIRES IN SECONDS: %s' % (result['access_token'], result['expires_in']))
+        return result['access_token']
+    else:
+        raise DemoError('MAYBE API_KEY or SECRET_KEY not correct: access_token or scope not found in token response')
+
+
+def handle_voice_recording(audio):
+    token = fetch_token()
+    newFilename = 'record16K.wav'
+    audio_raw, sr = librosa.load(audio)
+    speech_data = librosa.resample(y=audio_raw, orig_sr=sr, target_sr=16000)
+    sf.write(newFilename, speech_data, 16000)
+    with open(newFilename, 'rb') as speech_file:
+        speech_data = speech_file.read()
+    length = len(speech_data)
+    params = {'cuid': CUID, 'token': token, 'dev_pid': DEV_PID}
+    params_query = urlencode(params);
+    headers = {
+        'Content-Type': 'audio/' + FORMAT + '; rate=' + str(RATE),
+        'Content-Length': length
+    }
+    url = ASR_URL + "?" + params_query
+    print("url is", url);
+    print("header is", headers)
+    req = Request(ASR_URL + "?" + params_query, speech_data, headers)
+    try:
+        f = urlopen(req)
+        result_str = f.read()
+    except  URLError as err:
+        print('asr http response http code : ' + str(err.code))
+        result_str = err.read()
+
+    if (IS_PY3):
+        result_str = str(result_str, 'utf-8')
+    query = json.loads(result_str)['result'][0]
+    print(query)
+    return query
 
 
 def handle_summarize_index(current_model, *args):
